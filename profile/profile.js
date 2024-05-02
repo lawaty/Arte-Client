@@ -1,0 +1,1 @@
+$("#user_id").html(Store.state.user_id)

@@ -1,0 +1,8 @@
+div[template=paginator] {
+  padding: 0 15px 0;
+  background: var(--neutral-800);
+  color: var(--neutral-200);
+  font-size: 15px;
+  position: sticky;
+  bottom: 0;
+}

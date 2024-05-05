@@ -15,14 +15,17 @@ const ArteRouter = {
     })
 
     // Handle navigation
-    $(document).on('click', 'a', (event) => {
+    $(document).on('click', 'a', function (event) {
       event.preventDefault();
 
       var route = $(this).attr('href');
       if (Store.state.currentPage && route == Store.state.currentPage)
         return;
 
-      Store.state.currentPage = route;
+      if (event.ctrlKey || event.metaKey)
+        window.open(route, '_blank');
+      else
+        Store.state.currentPage = route;
     });
 
     // Handle back/forward buttons
@@ -58,10 +61,10 @@ const ArteRouter = {
     return null; // No match found
   },
 
-  __extractParams: function(pattern, route) {
+  __extractParams: function (pattern, route) {
     let sections = pattern.split('/')
-    for(let i in sections) {
-      if(sections[i].startsWith(':')) {
+    for (let i in sections) {
+      if (sections[i].startsWith(':')) {
         let prop = sections[i].split(':')[1]
         let value = route.split('/')[i]
         Store.state[prop] = value

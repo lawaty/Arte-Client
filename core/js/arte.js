@@ -555,7 +555,7 @@ class Sender {
   constructor(form) {
     this.form = form;
     this.form_title = $(form).attr("id");
-    this.endpoint = `${API}/${$(form).attr("endpoint")}`;
+    this.endpoint = `${config.API}/${$(form).attr("endpoint")}`;
     if (this.endpoint === undefined)
       console.log("api destination not found for " + this.form_title + " form");
     this.type = $(form).attr("request_type") !== undefined ? 

@@ -142,7 +142,7 @@ const Store = {
           $("body").append(`<script id="${reformatted}" type="text/javascript">
 ${js}
 
-//# sourceURL=${path}.js
+//# sourceURL=${path}
 </script>`);
 
         resolve()

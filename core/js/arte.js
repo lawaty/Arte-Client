@@ -478,7 +478,7 @@ class AJAX {
       options.beforeSend = AJAX.beforeSend;
 
     if (options.onLeave !== undefined)
-      options.complete = {...options.complete, onLeave: options.onLeave}
+      options.complete = { ...options.complete, onLeave: options.onLeave }
 
     if (options.complete !== undefined) {
       let complete = { ...options.complete }
@@ -501,7 +501,7 @@ class Form {
     /**
      * Form Initialization.
      */
-    this.form = form;
+    this.form = $(form);
     this.form_title = $(form).attr("id");
     if (this.form_title === undefined)
       error("id not found for " + this.form + " form");
@@ -558,8 +558,9 @@ class Sender {
     this.endpoint = `${config.API}/${$(form).attr("endpoint")}`;
     if (this.endpoint === undefined)
       console.log("api destination not found for " + this.form_title + " form");
-    this.type = $(form).attr("request_type") !== undefined ? 
+    this.type = $(form).attr("request_type") !== undefined ?
       $(form).attr("request_type") : "GET";
+    this.options = {}
   }
 
   send(data) {

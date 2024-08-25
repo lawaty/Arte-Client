@@ -18,7 +18,16 @@ const ArteRouter = {
     $(document).on('click', 'a', function (event) {
       event.preventDefault();
 
-      var route = $(this).attr('href');
+      if ($(this).attr('href') == '#')
+        return;
+
+      let route = $(this).attr('ref');
+      if (!route) {
+        $(this).attr('ref', $(this).attr('href'))
+        $(this).attr('href', `${config.BASE}/${$(this).attr('ref')}`.replaceAll('//', '/'))
+        route = $(this).attr('ref')
+      }
+
       if (Store.state.currentPage && route == Store.state.currentPage)
         return;
 
@@ -32,6 +41,21 @@ const ArteRouter = {
     $(window).on('popstate', () => {
       Store.state.currentPage = this.readURI()
     });
+
+    $("a[href]:not([ref])").each(function (i, a) {
+      if ($(a).attr('href') == '#')
+        return;
+      $(a).attr('ref', $(a).attr('href'))
+      $(a).attr('href', `${config.BASE}/${$(a).attr('ref')}`.replace(/^\/+/, ''))
+    })
+    $(document).on('component-loaded', () => {
+      $("a[href]:not([ref])").each(function (i, a) {
+        if ($(a).attr('href') == '#')
+          return;
+        $(a).attr('ref', $(a).attr('href'))
+        $(a).attr('href', `${config.BASE}/${$(a).attr('ref')}`.replace(/^\/+/, ''))
+      })
+    })
   },
 
   route: function (route) {
@@ -49,7 +73,9 @@ const ArteRouter = {
     else
       path = "404"
 
-    Store.loadComponent(path, "#content")
+    this.path = `${route}`
+
+    Store.loadComponent(path, "#content", true)
   },
 
   __match: function (route) {
@@ -73,11 +99,15 @@ const ArteRouter = {
   },
 
   readURI: function () {
-    return window.location.pathname.split(config.BASE)[1].replace(/^\/+|\/+$/g, '');
+    if (config.BASE.length)
+      return window.location.pathname.split(config.BASE)[1].replace(/^\/+|\/+$/g, '');
+    else if (window.location.pathname.length)
+      return window.location.pathname.replace(/^\/+|\/+$/g, '');
+    else return ''
   },
 
   updateURI: function (uri) {
-    window.history.pushState(null, null, `/${config.BASE}/${uri}`);
+    window.history.pushState(null, null, `${config.BASE}/${uri}`.replaceAll('//', '/'));
   }
 }
 

@@ -11,14 +11,16 @@ const Store = {
         let data = {}
         data[prop] = value
         $(document).trigger(`${prop}-change`, data)
+        return true
       },
       get: (obj, prop) => {
         return obj[prop]
       }
     })
 
-    config.APP = config.BASE + '/app'
-    config.CORE = config.BASE + '/core'
+    config.APP = (config.BASE + '/app').replace(/^\/+/, '');
+    config.CORE = (config.BASE + '/core').replace(/^\/+/, '');
+    config.ASSETS = (config.APP + '/assets').replace(/^\/+/, '');
   },
   def: function (something, loader) {
     if (!loader instanceof Promise)
@@ -41,7 +43,7 @@ const Store = {
 
       this.mutex.push(something)
 
-      if (this.data[something]){
+      if (this.data[something]) {
         resolve(this.data[something])
         this.mutex = this.mutex.filter(element => element !== something)
       }
@@ -124,32 +126,41 @@ const Store = {
    * @returns {Promise<undefined>} - resolves with a html string argument
    */
   loadJS(path) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (!path.endsWith('.js')) {
         error(`Received a wrong js path: ${path}`)
-        reject()
         return
       }
-      let reformatted = path.replaceAll('/', '-').split('.')[0]
+      let reformatted
+      if (path.includes('app/'))
+        reformatted = path.split('app/')[1].replaceAll('/', '-').split('.')[0]
+      else if (path.includes('core/'))
+        reformatted = path.split('core/')[1].replaceAll('/', '-').split('.')[0]
+      else
+        reformatted = path.replaceAll('/', '-').split('.')[0]
 
       if ($(`script#${reformatted}`).length) {
+        let filename = path.split('/').pop()
+        $(document).trigger(`${filename}-loaded`)
+        $(document).trigger(`${reformatted}-loaded`)
         resolve()
         return
       }
 
       this.get(path, true, { dataType: "text" }).then(js => {
         if (!$(`script#${reformatted}`).length)
-          $("body").append(`<script id="${reformatted}" type="text/javascript">
+          $("body").append(`<script id="${reformatted}" type="text/javascript">"use strict"
 ${js}
 
 //# sourceURL=${path}
 </script>`);
 
         resolve()
-
+        let filename = path.split('/').pop()
+        $(document).trigger(`${filename}-loaded`)
+        $(document).trigger(`${reformatted}-loaded`)
       }).catch(function () {
         error("Couldn't fetch js from path " + path)
-        reject()
       })
     })
   },
@@ -162,18 +173,25 @@ ${js}
    * @returns {Promise} - A Promise that resolves when the component's HTML and JavaScript files have been loaded 
    *                      successfully, or rejects if there's an error during the loading process.
    */
-  loadComponent(path, target) {
-    return new Promise((resolve, reject) => {
+  loadComponent(path, target, with_css = false) {
+    target = $(target)
+    return new Promise((resolve) => {
       let comp = path.split('/').pop(); // Extract component name from path
 
       if (comp != '404')
-        path = `/${config.APP}/${path}`;
+        path = `${config.BASE}/app/${path}`.replace('//', '/');
       else
-        path = `/${config.CORE}/${path}`;
+        path = `/${config.CORE}/${path}`.replace('//', '/');
 
-      let reformatted = path.replaceAll('/', '-').split('.')[0]
+      let reformatted
+      if (path.includes('app/'))
+        reformatted = path.split('app/')[1].replaceAll('/', '-').split('.')[0]
+      else if (path.includes('core/'))
+        reformatted = path.split('core/')[1].replaceAll('/', '-').split('.')[0]
+      else
+        reformatted = path.replaceAll('/', '-').split('.')[0]
 
-      if (!$(`link#${reformatted}`).length)
+      if (with_css && !$(`link#${reformatted}`).length)
         $("head").append(`<link rel="stylesheet" id="${reformatted}" href="${path}/${comp}.css">`);
 
       this.loadHTML(`${path}/${comp}.html`, target)
@@ -182,15 +200,19 @@ ${js}
         })
         .then(() => {
           $(document).trigger(`${comp}-loaded`);
+          $(document).trigger(`component-loaded`);
           resolve()
         })
-        .catch((error) => {
-          error("Couldn't load component at path " + path);
-          reject()
-        });
     })
   }
 
+}
+
+function redirect(page, reload = false) {
+  if (reload)
+    window.location.href = `${config.BASE}/${page}`.replace(/^\/+/, '');
+  else
+    Store.state.currentPage = page
 }
 
 Store.init()
